@@ -60,7 +60,7 @@ IAP及E^2^PROM新增特殊功能寄存器如下表所示。
 
 表19-2 特殊寄存器
 
-![](../media/image192.png){width="4.382638888888889in" height="1.75625in"}
+![](../media/image192.png)  
 
 1.  ISP_DATA：ISP/IAP数据寄存器
 
@@ -70,7 +70,7 @@ IAP及E^2^PROM新增特殊功能寄存器如下表所示。
 
 4.  ISP_CMD：ISP/IAP命令寄存器
 
-> ![](../media/image193.png){width="5.7652777777777775in" height="0.6694444444444444in"}
+> ![](../media/image193.png)  
 
 **MS1 MS0=00**
 
@@ -94,7 +94,7 @@ IAP及E^2^PROM新增特殊功能寄存器如下表所示。
 
 **ISP_CONTR：ISP/IAP控制寄存器**
 
-![](../media/image194.png){width="5.7652777777777775in" height="0.6090277777777777in"}
+![](../media/image194.png)  
 
 ISPEN：ISP/IAP功能允许位。ISPEN=0，禁止ISP/IAP读、写、擦除操作。ISPEN=1，允许ISP/IAP读、写、擦除操作。
 
@@ -108,7 +108,7 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 表19-3 设置等待时间
 
-![](../media/image195.png){width="4.147916666666666in" height="1.0520833333333333in"}
+![](../media/image195.png)  
 
 ## 19.3 E^2^PROM驱动函数编写
 
@@ -428,7 +428,7 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 将程序下载到单片机开发板观察现象是否与预想的一致，重新上电或者按复位按键，看显示值是否会增加。
 
-![](../media/image196.png){width="5.434722222222222in" height="4.052083333333333in"}
+![](../media/image196.png)  
 
 图19-9 内部E^E^PROM测试结果
 
