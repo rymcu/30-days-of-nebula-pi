@@ -104,7 +104,7 @@ SWRST：0不操作，1表示产生软件系统复位，硬件自动复位。
 
 SWBS=1，SWRST=1时，表示在应用程序区软件复位并从系统ISP监控程序区开始执行程序。SWBS=0，SWRST=1时，表示在应用程序区软件复位并从应用程序区开始处执行程序。
 
-B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推荐选择如下所示。
+B2~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推荐选择如下所示。
 
 表19-3 设置等待时间
 
@@ -114,13 +114,13 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 前面已经讲解了与内部E^2^PROM有关的6个寄存器的功能，下面我们结合这些寄存器编写驱动函数，因为在正常的reg52.h中并没有对上述6个特殊功能寄存器进行声明，所以首先得进行声明以及名字字节定义，新建驱动文件Drive_Eeprom.c如下图所示：
 
-1.  #include\<reg52.h>  
+1.  #include<reg52.h>  
 
 2.  #define uint unsigned int  
 
 3.  #define uchar  unsigned char  
 
-4.  /\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*特殊功能寄存器声明\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+4.  /****************特殊功能寄存器声明****************/
 
 5.  sfr  ISP_DATA = 0xE2;
 
@@ -134,7 +134,7 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 10. sfr ISP_CONTR = 0xE7;
 
-11. /\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*定义命令字节\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+11. /******************定义命令字节******************/
 
 12. #define  read_cmd    0x01   //读命令        
 
@@ -142,15 +142,15 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 14. #define erase_cmd    0x03   //擦除命令  
 
-15. /\*\*\*\*定义操作等待时间以及允许IAP操作\*\*\*\*\*\*\*/
+15. /****定义操作等待时间以及允许IAP操作*******/
 
-16. #define enable_waitTime 0x82  //系统工作时钟\<20MHz 时 
+16. #define enable_waitTime 0x82  //系统工作时钟<20MHz 时 
 
 图19-1 寄存器声明及定义
 
 接下来两个函数分别为关闭、开启ISP/IAP功能函数，以便后续调用，如下图所示：
 
-1.  **void** ISP_IAP_disable(**void**)//关闭ISP_IAP
+1.  void ISP_IAP_disable(void)//关闭ISP_IAP
 
 2.  {
 
@@ -166,7 +166,7 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 图19-2 功能关闭函数
 
-1.  **void** ISP_IAP_trigger()//触发
+1.  void ISP_IAP_trigger()//触发
 
 2.  {
 
@@ -198,7 +198,7 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 上面讲解的是读取单个字节的步骤，如需读取多个字节的数据只需重复第4到第6步，读数据函数如下所示：
 
-1.  **void** ISP_IAP_readData(uint beginAddr, uchar\* pBuf, uint dataSize) //读取数据
+1.  void ISP_IAP_readData(uint beginAddr, uchar* pBuf, uint dataSize) //读取数据
 
 2.  {
 
@@ -208,11 +208,11 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 5.      ISP_CONTR = enable_waitTime;//开启ISP_IAP，并送等待时间
 
-6.      **while**(dataSize\--)        //循环读取
+6.      while(dataSize--)        //循环读取
 
 7.      {
 
-8.          ISP_ADDRH = (uchar)(beginAddr >\> 8);     //送地址高字节
+8.          ISP_ADDRH = (uchar)(beginAddr >> 8);     //送地址高字节
 
 9.          ISP_ADDRL = (uchar)(beginAddr & 0x00ff); //送地址低字节
 
@@ -220,7 +220,7 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 11.         beginAddr++;      //地址++
 
-12.         \*pBuf++ = ISP_DATA;     //将数据保存到接收缓冲区
+12.         *pBuf++ = ISP_DATA;     //将数据保存到接收缓冲区
 
 13.     }
 
@@ -232,7 +232,7 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 写数据函数与读数据函数类似，如下图所示：
 
-1.  **void** ISP_IAP_writeData(uint beginAddr,uchar\* pDat,uint dataSize) //写数据
+1.  void ISP_IAP_writeData(uint beginAddr,uchar* pDat,uint dataSize) //写数据
 
 2.  {
 
@@ -240,15 +240,15 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 4.      ISP_CMD = wirte_cmd;               //送字节编程命令字
 
-5.      **while**(dataSize\--)
+5.      while(dataSize--)
 
 6.      {
 
-7.          ISP_ADDRH = (uchar)(beginAddr >\> 8);   //送地址高字节
+7.          ISP_ADDRH = (uchar)(beginAddr >> 8);   //送地址高字节
 
 8.  ISP_ADDRL = (uchar)(beginAddr & 0x00ff);//送地址低字节
 
-9.          ISP_DATA = \*pDat++;//送数据
+9.          ISP_DATA = *pDat++;//送数据
 
 10.         beginAddr++;
 
@@ -264,7 +264,7 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 擦除扇区函数如下图所示：
 
-1.  **void** ISP_IAP_sectorErase(uint sectorAddr)//扇区擦除
+1.  void ISP_IAP_sectorErase(uint sectorAddr)//扇区擦除
 
 2.  {
 
@@ -272,7 +272,7 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 4.      ISP_CMD = erase_cmd;         //送扇区擦除命令字
 
-5.      ISP_ADDRH = (uchar)(sectorAddr >\> 8); //送地址高字节
+5.      ISP_ADDRH = (uchar)(sectorAddr >> 8); //送地址高字节
 
 6.      ISP_ADDRL = (uchar)(sectorAddr & 0X00FF);//送地址低字节
 
@@ -286,21 +286,21 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 值得注意的是：在擦除扇区函数中，地址只需在该扇区范围内即可，不要求发送该扇区的首地址。将上述所有代码均放入驱动文件Drive_Eeprom.c中，不再赘述。头文件Drive_Eeprom.h 如下图所示：
 
-1.  #ifndef \_\_Eeprom_H\_\_  
+1.  #ifndef __Eeprom_H__  
 
-2.  #define \_\_Eeprom_H\_\_  
+2.  #define __Eeprom_H__  
 
 3.    
 
-4.  **extern** **void** ISP_IAP_disable(**void**);//关闭ISP_IAP
+4.  extern void ISP_IAP_disable(void);//关闭ISP_IAP
 
-5.  **extern** **void** ISP_IAP_trigger();//触发
+5.  extern void ISP_IAP_trigger();//触发
 
-6.  **extern** **void** ISP_IAP_readData(unsigned **int** beginAddr, unsigned **char**\* pBuf, unsigned **int** dataSize);//读取数据
+6.  extern void ISP_IAP_readData(unsigned int beginAddr, unsigned char* pBuf, unsigned int dataSize);//读取数据
 
-7.  **extern** **void** ISP_IAP_writeData(unsigned **int** beginAddr,unsigned **char**\* pDat,unsigned **int** dataSize);//写数据
+7.  extern void ISP_IAP_writeData(unsigned int beginAddr,unsigned char* pDat,unsigned int dataSize);//写数据
 
-8.  **extern** **void** ISP_IAP_sectorErase(unsigned **int** sectorAddr);//扇区擦除
+8.  extern void ISP_IAP_sectorErase(unsigned int sectorAddr);//扇区擦除
 
 9.    
 
@@ -312,43 +312,43 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 下面我们写一个小的应用程序来验证我们驱动函数，函数实现的功能为记录开发板上电的次数。并把上电的次数，显示到1602液晶显示器上，主函数如下图所示：
 
-1.  /\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+1.  /*******************************************************************
 
-2.  \*   单片机内部自带EEPROM（Flash）读写测试 (LCD显示单片机加电次数)
+2.  *   单片机内部自带EEPROM（Flash）读写测试 (LCD显示单片机加电次数)
 
-3.  \* \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*
+3.  * ******************************************************************
 
-4.  \* 【主芯片】：STC89SC52/STC12C5A60S2
+4.  * 【主芯片】：STC89SC52/STC12C5A60S2
 
-5.  \* 【主频率】: 11.0592MHz
+5.  * 【主频率】: 11.0592MHz
 
-6.  \*
+6.  *
 
-7.  \* 【版  本】： V1.0
+7.  * 【版  本】： V1.0
 
-8.  \* 【作  者】： stephenhugh
+8.  * 【作  者】： stephenhugh
 
-9.  \* 【网  站】：https://rymcu.taobao.com/
+9.  * 【网  站】：https://rymcu.taobao.com/
 
-10. \* 【邮  箱】：
+10. * 【邮  箱】：
 
-11. \*
+11. *
 
-12. \* 【版  权】All Rights Reserved
+12. * 【版  权】All Rights Reserved
 
-13. \* 【声  明】此程序仅用于学习与参考，引用请注明版权和作者信息！
+13. * 【声  明】此程序仅用于学习与参考，引用请注明版权和作者信息！
 
 14.           
 
-15. \*
+15. *
 
-16. \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*/
+16. *******************************************************************/
 
-17. #include\<reg52.h>  
+17. #include<reg52.h>  
 
-18. #include\"Drive_1602.h\"  
+18. #include<Drive_1602.h>  
 
-19. #include\"Drive_Eeprom.h\"  
+19. #include<Drive_Eeprom.h>  
 
 20.   
 
@@ -358,21 +358,21 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 23.   
 
-24. sbit DU = P0\^6;//数码管段选、位选引脚定义
+24. sbit DU = P0^6;//数码管段选、位选引脚定义
 
-25. sbit WE = P0\^7;
+25. sbit WE = P0^7;
 
 26.   
 
-27. uchar pbuf\[5\] = {0};//数据缓冲区
+27. uchar pbuf[5] = {0};//数据缓冲区
 
-28. uchar  str\[8\] = {0};//字符临时变量
+28. uchar  str[8] = {0};//字符临时变量
 
-29. uchar  disp\[\] =\"times of PowerOn\";
+29. uchar  disp[] ="times of PowerOn";
 
 30.   
 
-31. **void** main()
+31. void main()
 
 32. {
 
@@ -392,17 +392,17 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 40.   
 
-41.     pbuf\[0\]++;
+41.     pbuf[0]++;
 
 42.   
 
-43.     str\[0\] = pbuf\[0\]/100 + \'0\';
+43.     str[0] = pbuf[0]/100 + '0';
 
-44.     str\[1\] = (pbuf\[0\]%100)/10 + \'0\';
+44.     str[1] = (pbuf[0]%100)/10 + '0';
 
-45.     str\[2\] = pbuf\[0\]%10 + \'0\';
+45.     str[2] = pbuf[0]%10 + '0';
 
-46.     str\[4\] = \'\\0\';
+46.     str[4] = '\0';
 
 47.       
 
@@ -418,7 +418,7 @@ B2\~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推�
 
 53.   
 
-54.     **while**(1);
+54.     while(1);
 
 55.   
 
