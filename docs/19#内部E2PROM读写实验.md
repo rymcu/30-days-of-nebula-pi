@@ -114,7 +114,7 @@ B2~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推荐
 
 前面已经讲解了与内部E^2^PROM有关的6个寄存器的功能，下面我们结合这些寄存器编写驱动函数，因为在正常的reg52.h中并没有对上述6个特殊功能寄存器进行声明，所以首先得进行声明以及名字字节定义，新建驱动文件Drive_Eeprom.c如下图所示：
 ```c
-#include<reg52.h>  
+#include <reg52.h>  
 #define uint unsigned int  
 #define uchar  unsigned char  
 /****************特殊功能寄存器声明****************/
@@ -272,9 +272,9 @@ extern void ISP_IAP_sectorErase(unsigned int sectorAddr);//扇区擦除
          
 *
 *******************************************************************/
-#include<reg52.h>  
-#include<Drive_1602.h>  
-#include<Drive_Eeprom.h>  
+#include <reg52.h>  
+#include <Drive_1602.h>  
+#include <Drive_Eeprom.h>  
  
 #define uchar unsigned char  
 #define  uint unsigned int  
