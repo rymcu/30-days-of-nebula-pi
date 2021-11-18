@@ -113,70 +113,49 @@ B2~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推荐
 ## 19.3 E^2^PROM驱动函数编写
 
 前面已经讲解了与内部E^2^PROM有关的6个寄存器的功能，下面我们结合这些寄存器编写驱动函数，因为在正常的reg52.h中并没有对上述6个特殊功能寄存器进行声明，所以首先得进行声明以及名字字节定义，新建驱动文件Drive_Eeprom.c如下图所示：
-
-1.  #include<reg52.h>  
-
-2.  #define uint unsigned int  
-
-3.  #define uchar  unsigned char  
-
-4.  /****************特殊功能寄存器声明****************/
-
-5.  sfr  ISP_DATA = 0xE2;
-
-6.  sfr ISP_ADDRH = 0xE3;
-
-7.  sfr ISP_ADDRL = 0xE4;
-
-8.  sfr   ISP_CMD = 0xE5;
-
-9.  sfr  ISP_TRIG = 0xE6;
-
-10. sfr ISP_CONTR = 0xE7;
-
-11. /******************定义命令字节******************/
-
-12. #define  read_cmd    0x01   //读命令        
-
-13. #define wirte_cmd    0x02   //写命令        
-
-14. #define erase_cmd    0x03   //擦除命令  
-
-15. /****定义操作等待时间以及允许IAP操作*******/
-
-16. #define enable_waitTime 0x82  //系统工作时钟<20MHz 时 
+```c
+#include <reg52.h>  
+#define uint unsigned int  
+#define uchar  unsigned char  
+/****************特殊功能寄存器声明****************/
+sfr  ISP_DATA = 0xE2;
+sfr ISP_ADDRH = 0xE3;
+sfr ISP_ADDRL = 0xE4;
+sfr   ISP_CMD = 0xE5;
+sfr  ISP_TRIG = 0xE6;
+sfr ISP_CONTR = 0xE7;
+/******************定义命令字节******************/
+#define  read_cmd    0x01   //读命令        
+#define wirte_cmd    0x02   //写命令        
+#define erase_cmd    0x03   //擦除命令  
+/****定义操作等待时间以及允许IAP操作*******/
+#define enable_waitTime 0x82  //系统工作时钟<20MHz 时 
+```
 
 图19-1 寄存器声明及定义
 
 接下来两个函数分别为关闭、开启ISP/IAP功能函数，以便后续调用，如下图所示：
 
-1.  void ISP_IAP_disable(void)//关闭ISP_IAP
-
-2.  {
-
-3.      EA=1;//恢复中断
-
-4.      ISP_CONTR = 0x00;
-
-5.        ISP_CMD = 0x00;
-
-6.       ISP_TRIG = 0x00;
-
-7.  }
+```c
+void ISP_IAP_disable(void)//关闭ISP_IAP
+{
+    EA=1;//恢复中断
+    ISP_CONTR = 0x00;
+      ISP_CMD = 0x00;
+     ISP_TRIG = 0x00;
+}
+```
 
 图19-2 功能关闭函数
 
-1.  void ISP_IAP_trigger()//触发
-
-2.  {
-
-3.      EA=0;           //下面的2条指令必须连续执行,故关中断
-
-4.      ISP_TRIG = 0x46;//送触发命令字0x46
-
-5.      ISP_TRIG = 0xB9;//送触发命令字0xB9
-
-6.  }
+```c
+void ISP_IAP_trigger()//触发
+{
+    EA=0;           //下面的2条指令必须连续执行,故关中断
+    ISP_TRIG = 0x46;//送触发命令字0x46
+    ISP_TRIG = 0xB9;//送触发命令字0xB9
+}
+```
 
 图19-3开启ISP/IAP功能函数
 
@@ -198,113 +177,77 @@ B2~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推荐
 
 上面讲解的是读取单个字节的步骤，如需读取多个字节的数据只需重复第4到第6步，读数据函数如下所示：
 
-1.  void ISP_IAP_readData(uint beginAddr, uchar* pBuf, uint dataSize) //读取数据
-
-2.  {
-
-3.      ISP_DATA=0;          //清零,不清也可以
-
-4.      ISP_CMD = read_cmd;        //指令:读取
-
-5.      ISP_CONTR = enable_waitTime;//开启ISP_IAP，并送等待时间
-
-6.      while(dataSize--)        //循环读取
-
-7.      {
-
-8.          ISP_ADDRH = (uchar)(beginAddr >> 8);     //送地址高字节
-
-9.          ISP_ADDRL = (uchar)(beginAddr & 0x00ff); //送地址低字节
-
-10.         ISP_IAP_trigger();     //触发
-
-11.         beginAddr++;      //地址++
-
-12.         *pBuf++ = ISP_DATA;     //将数据保存到接收缓冲区
-
-13.     }
-
-14.     ISP_IAP_disable();//关闭ISP_IAP功能
-
-15. }
+```c
+void ISP_IAP_readData(uint beginAddr, uchar* pBuf, uint dataSize) //读取数据
+{
+    ISP_DATA=0;          //清零,不清也可以
+    ISP_CMD = read_cmd;        //指令:读取
+    ISP_CONTR = enable_waitTime;//开启ISP_IAP，并送等待时间
+    while(dataSize--)        //循环读取
+    {
+        ISP_ADDRH = (uchar)(beginAddr >> 8);     //送地址高字节
+        ISP_ADDRL = (uchar)(beginAddr & 0x00ff); //送地址低字节
+       ISP_IAP_trigger();     //触发
+       beginAddr++;      //地址++
+       *pBuf++ = ISP_DATA;     //将数据保存到接收缓冲区
+   }
+   ISP_IAP_disable();//关闭ISP_IAP功能
+}
+```
 
 图19-4 读E^2^PROM数据函数
 
 写数据函数与读数据函数类似，如下图所示：
 
-1.  void ISP_IAP_writeData(uint beginAddr,uchar* pDat,uint dataSize) //写数据
-
-2.  {
-
-3.      ISP_CONTR = enable_waitTime;      //开启ISP_IAP，并送等待时间
-
-4.      ISP_CMD = wirte_cmd;               //送字节编程命令字
-
-5.      while(dataSize--)
-
-6.      {
-
-7.          ISP_ADDRH = (uchar)(beginAddr >> 8);   //送地址高字节
-
-8.  ISP_ADDRL = (uchar)(beginAddr & 0x00ff);//送地址低字节
-
-9.          ISP_DATA = *pDat++;//送数据
-
-10.         beginAddr++;
-
-11.         ISP_IAP_trigger();//触发
-
-12.     }
-
-13.     ISP_IAP_disable();   //关闭
-
-14. }
+```c
+void ISP_IAP_writeData(uint beginAddr,uchar* pDat,uint dataSize) //写数据
+{
+    ISP_CONTR = enable_waitTime;      //开启ISP_IAP，并送等待时间
+    ISP_CMD = wirte_cmd;               //送字节编程命令字
+    while(dataSize--)
+    {
+        ISP_ADDRH = (uchar)(beginAddr >> 8);   //送地址高字节
+ISP_ADDRL = (uchar)(beginAddr & 0x00ff);//送地址低字节
+        ISP_DATA = *pDat++;//送数据
+       beginAddr++;
+       ISP_IAP_trigger();//触发
+   }
+   ISP_IAP_disable();   //关闭
+}
+```
 
 图19-5写E^2^PROM数据函数
 
 擦除扇区函数如下图所示：
 
-1.  void ISP_IAP_sectorErase(uint sectorAddr)//扇区擦除
-
-2.  {
-
-3.      ISP_CONTR = enable_waitTime; //开启ISP_IAP;并送等待时间
-
-4.      ISP_CMD = erase_cmd;         //送扇区擦除命令字
-
-5.      ISP_ADDRH = (uchar)(sectorAddr >> 8); //送地址高字节
-
-6.      ISP_ADDRL = (uchar)(sectorAddr & 0X00FF);//送地址低字节
-
-7.      ISP_IAP_trigger();//触发
-
-8.      ISP_IAP_disable();//关闭ISP_IAP功能
-
-9.  }
+```c
+void ISP_IAP_sectorErase(uint sectorAddr)//扇区擦除
+{
+    ISP_CONTR = enable_waitTime; //开启ISP_IAP;并送等待时间
+    ISP_CMD = erase_cmd;         //送扇区擦除命令字
+    ISP_ADDRH = (uchar)(sectorAddr >> 8); //送地址高字节
+    ISP_ADDRL = (uchar)(sectorAddr & 0X00FF);//送地址低字节
+    ISP_IAP_trigger();//触发
+    ISP_IAP_disable();//关闭ISP_IAP功能
+}
+```
 
 图19-6 擦除E^2^PROM函数
 
 值得注意的是：在擦除扇区函数中，地址只需在该扇区范围内即可，不要求发送该扇区的首地址。将上述所有代码均放入驱动文件Drive_Eeprom.c中，不再赘述。头文件Drive_Eeprom.h 如下图所示：
 
-1.  #ifndef __Eeprom_H__  
-
-2.  #define __Eeprom_H__  
-
-3.    
-
-4.  extern void ISP_IAP_disable(void);//关闭ISP_IAP
-
-5.  extern void ISP_IAP_trigger();//触发
-
-6.  extern void ISP_IAP_readData(unsigned int beginAddr, unsigned char* pBuf, unsigned int dataSize);//读取数据
-
-7.  extern void ISP_IAP_writeData(unsigned int beginAddr,unsigned char* pDat,unsigned int dataSize);//写数据
-
-8.  extern void ISP_IAP_sectorErase(unsigned int sectorAddr);//扇区擦除
-
-9.    
-
-10. #endif 
+```c
+#ifndef __Eeprom_H__  
+#define __Eeprom_H__  
+  
+extern void ISP_IAP_disable(void);//关闭ISP_IAP
+extern void ISP_IAP_trigger();//触发
+extern void ISP_IAP_readData(unsigned int beginAddr, unsigned char* pBuf, unsigned int dataSize);//读取数据
+extern void ISP_IAP_writeData(unsigned int beginAddr,unsigned char* pDat,unsigned int dataSize);//写数据
+extern void ISP_IAP_sectorErase(unsigned int sectorAddr);//扇区擦除
+  
+#endif 
+```
 
 图19-7 驱动函数头文件
 
@@ -312,117 +255,64 @@ B2~B0表示在读、写、擦除操作过程中CPU插入的等待时间，推荐
 
 下面我们写一个小的应用程序来验证我们驱动函数，函数实现的功能为记录开发板上电的次数。并把上电的次数，显示到1602液晶显示器上，主函数如下图所示：
 
-1.  /*******************************************************************
-
-2.  *   单片机内部自带EEPROM（Flash）读写测试 (LCD显示单片机加电次数)
-
-3.  * ******************************************************************
-
-4.  * 【主芯片】：STC89SC52/STC12C5A60S2
-
-5.  * 【主频率】: 11.0592MHz
-
-6.  *
-
-7.  * 【版  本】： V1.0
-
-8.  * 【作  者】： stephenhugh
-
-9.  * 【网  站】：https://rymcu.taobao.com/
-
-10. * 【邮  箱】：
-
-11. *
-
-12. * 【版  权】All Rights Reserved
-
-13. * 【声  明】此程序仅用于学习与参考，引用请注明版权和作者信息！
-
-14.           
-
-15. *
-
-16. *******************************************************************/
-
-17. #include<reg52.h>  
-
-18. #include<Drive_1602.h>  
-
-19. #include<Drive_Eeprom.h>  
-
-20.   
-
-21. #define uchar unsigned char  
-
-22. #define  uint unsigned int  
-
-23.   
-
-24. sbit DU = P0^6;//数码管段选、位选引脚定义
-
-25. sbit WE = P0^7;
-
-26.   
-
-27. uchar pbuf[5] = {0};//数据缓冲区
-
-28. uchar  str[8] = {0};//字符临时变量
-
-29. uchar  disp[] ="times of PowerOn";
-
-30.   
-
-31. void main()
-
-32. {
-
-33.     Init_1602();//1602初始化
-
-34.   
-
-35.     P2 = 0xff;//关闭所有数码管
-
-36.     WE = 1;
-
-37.     WE = 0;
-
-38.   
-
-39.     ISP_IAP_readData(0x21f0,pbuf,**sizeof**(pbuf));  //读取内部存储器中数值
-
-40.   
-
-41.     pbuf[0]++;
-
-42.   
-
-43.     str[0] = pbuf[0]/100 + '0';
-
-44.     str[1] = (pbuf[0]%100)/10 + '0';
-
-45.     str[2] = pbuf[0]%10 + '0';
-
-46.     str[4] = '\0';
-
-47.       
-
-48.     Disp_1602_str(1,1,disp);//显示
-
-49.   Disp_1602_str(2,6,str);//显示上电次数
-
-50.   
-
-51. ISP_IAP_sectorErase(0x2000);            //扇区擦除,一块512字节
-
-52.     ISP_IAP_writeData(0x21f0,pbuf,**sizeof**(pbuf));  //写EEPROM
-
-53.   
-
-54.     while(1);
-
-55.   
-
-56. }
+```c
+/*******************************************************************
+*   单片机内部自带EEPROM（Flash）读写测试 (LCD显示单片机加电次数)
+* ******************************************************************
+* 【主芯片】：STC89SC52/STC12C5A60S2
+* 【主频率】: 11.0592MHz
+*
+* 【版  本】： V1.0
+* 【作  者】： stephenhugh
+* 【网  站】：https://rymcu.taobao.com/
+* 【邮  箱】：
+*
+* 【版  权】All Rights Reserved
+* 【声  明】此程序仅用于学习与参考，引用请注明版权和作者信息！
+         
+*
+*******************************************************************/
+#include <reg52.h>  
+#include <Drive_1602.h>  
+#include <Drive_Eeprom.h>  
+ 
+#define uchar unsigned char  
+#define  uint unsigned int  
+ 
+sbit DU = P0^6;//数码管段选、位选引脚定义
+sbit WE = P0^7;
+ 
+uchar pbuf[5] = {0};//数据缓冲区
+uchar  str[8] = {0};//字符临时变量
+uchar  disp[] ="times of PowerOn";
+ 
+void main()
+{
+   Init_1602();//1602初始化
+ 
+   P2 = 0xff;//关闭所有数码管
+   WE = 1;
+   WE = 0;
+ 
+   ISP_IAP_readData(0x21f0,pbuf,**sizeof**(pbuf));  //读取内部存储器中数值
+ 
+   pbuf[0]++;
+ 
+   str[0] = pbuf[0]/100 + '0';
+   str[1] = (pbuf[0]%100)/10 + '0';
+   str[2] = pbuf[0]%10 + '0';
+   str[4] = '\0';
+     
+   Disp_1602_str(1,1,disp);//显示
+ Disp_1602_str(2,6,str);//显示上电次数
+ 
+ISP_IAP_sectorErase(0x2000);            //扇区擦除,一块512字节
+   ISP_IAP_writeData(0x21f0,pbuf,**sizeof**(pbuf));  //写EEPROM
+ 
+   while(1);
+ 
+}
+```
 
 图19-8 E^2^PROM应用主程序
 
